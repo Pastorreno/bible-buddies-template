@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function renderMarkdown(text) {
   return text
@@ -61,6 +62,7 @@ export default function App() {
 
   return (
     <div className="scriptorium-app">
+      <SpeedInsights />
       {/* Header */}
       <header className="scriptorium-header">
         <div className="header-brand">
