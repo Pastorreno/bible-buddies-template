@@ -354,3 +354,34 @@ body {
     align-items: stretch;
   }
 }
+
+
+/* ---- Tab Content Panels (Scripture & Assess) ---- */
+.tab-content-panel {
+     flex: 1;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     overflow-y: auto;
+     padding: 24px 20px;
+}
+
+.tab-placeholder {
+     text-align: center;
+     max-width: 320px;
+     color: var(--ink-light);
+}
+
+.tab-placeholder h2 {
+     font-family: 'Georgia', serif;
+     font-size: 1.5rem;
+     font-style: italic;
+     color: var(--crimson);
+     margin: 12px 0 10px;
+}
+
+.tab-placeholder p {
+     font-size: 14px;
+     line-height: 1.6;
+     color: var(--muted);
+}
