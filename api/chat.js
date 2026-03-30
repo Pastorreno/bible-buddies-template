@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     });
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return res.status(200).json({ text: text || null });
+    return res.status(200).json({ reply: text || null });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
