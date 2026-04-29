@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import ScriptureTab from './ScriptureTab';
+import AssessTab from './AssessTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -217,27 +219,11 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
   const renderTabContent = () => {
     if (activeTab === 'scripture') {
-      return (
-        <div className="tab-content-panel">
-          <div className="tab-placeholder">
-            <span style={{ fontSize: '3rem' }}>📖</span>
-            <h2>Sacred Texts</h2>
-            <p>Scripture browsing coming soon. Use the Study tab to ask about any verse or passage.</p>
-          </div>
-        </div>
-      );
+      return <ScriptureTab translation={translation} />;
     }
 
     if (activeTab === 'assess') {
-      return (
-        <div className="tab-content-panel">
-          <div className="tab-placeholder">
-            <span style={{ fontSize: '3rem' }}>✎</span>
-            <h2>Knowledge Assessment</h2>
-            <p>Assessment features coming soon.</p>
-          </div>
-        </div>
-      );
+      return <AssessTab topics={topics} translation={translation} />;
     }
 
     return (
