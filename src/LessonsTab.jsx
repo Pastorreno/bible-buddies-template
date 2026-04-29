@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SeriesTab from './SeriesTab';
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
@@ -153,6 +154,13 @@ export default function LessonsTab({ topics, translation }) {
         <p className="assess-desc">Seminary-quality study tools for individuals, small groups, and leaders.</p>
       </div>
       <div className="lessons-cards">
+        <button className="lesson-card" onClick={() => setMode('series')}>
+          <span className="lesson-card-icon">📖</span>
+          <div>
+            <p className="lesson-card-title">Bible Study Series</p>
+            <p className="lesson-card-desc">Build a multi-week series with saved sessions for personal or small group use.</p>
+          </div>
+        </button>
         <button className="lesson-card" onClick={() => setMode('builder')}>
           <span className="lesson-card-icon">✍️</span>
           <div>
@@ -170,6 +178,8 @@ export default function LessonsTab({ topics, translation }) {
       </div>
     </div>
   );
+
+  if (mode === 'series') return <SeriesTab translation={translation} onBack={() => setMode(null)} />;
 
   // ── Lesson Builder ─────────────────────────────────────────────────────────
   if (mode === 'builder') return (
