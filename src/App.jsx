@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ScriptureTab from './ScriptureTab';
 import LessonsTab from './LessonsTab';
+import SermonTab from './SermonTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -226,6 +227,10 @@ export default function App() {
       return <LessonsTab topics={topics} translation={translation} />;
     }
 
+    if (activeTab === 'present') {
+      return <SermonTab translation={translation} />;
+    }
+
     return (
       <React.Fragment>
         <main className="chat-area">
@@ -360,6 +365,10 @@ export default function App() {
         <button className={`nav-item ${activeTab === 'lessons' ? 'active' : ''}`} onClick={() => setActiveTab('lessons')}>
           <span className="nav-icon">✎</span>
           <span>LESSONS</span>
+        </button>
+        <button className={`nav-item ${activeTab === 'present' ? 'active' : ''}`} onClick={() => setActiveTab('present')}>
+          <span className="nav-icon">📽</span>
+          <span>PRESENT</span>
         </button>
       </nav>
     </div>
