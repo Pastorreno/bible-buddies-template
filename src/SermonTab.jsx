@@ -40,44 +40,65 @@ function makeId() { return Date.now().toString(36) + Math.random().toString(36).
 // ── Projector window ──────────────────────────────────────────────────────────
 function ProjectorPage() {
   const [slide, setSlide] = useState(null);
+  const [bg, setBg] = useState(null);
+
   useEffect(() => {
     const ch = new BroadcastChannel(CHANNEL);
-    ch.onmessage = (e) => setSlide(e.data);
+    ch.onmessage = (e) => {
+      setSlide(e.data);
+      // Generate background when title arrives for the first time
+      if (e.data?.title && !bg) {
+        fetch('/api/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `A cinematic, reverent, photorealistic background image for a church sermon titled "${e.data.title}". Soft light, sacred atmosphere, no text, no people, suitable as a dark presentation background. Muted tones, dramatic lighting.`,
+          }),
+        })
+          .then(r => r.json())
+          .then(d => { if (d.image) setBg(`data:${d.mimeType};base64,${d.image}`); })
+          .catch(() => {});
+      }
+    };
     return () => ch.close();
-  }, []);
+  }, [bg]);
 
   return (
     <div style={{
-      background: '#0a0a0a', color: '#fff', height: '100vh', width: '100vw',
+      background: bg ? `url(${bg}) center/cover no-repeat` : '#0a0a0a',
+      height: '100vh', width: '100vw', position: 'relative',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', padding: '8vw', boxSizing: 'border-box',
       fontFamily: 'Georgia, serif',
     }}>
-      {!slide ? (
-        <p style={{ color: '#333', fontSize: '1.5rem' }}>Waiting for presenter…</p>
-      ) : slide.blank ? (
-        <div />
-      ) : (
-        <>
-          <p style={{ fontSize: 'clamp(1.8rem,4.5vw,3.8rem)', lineHeight: 1.55, textAlign: 'center', marginBottom: '2rem', fontStyle: 'italic', color: '#f5f0e8' }}>
-            "{slide.text}"
-          </p>
-          <p style={{ fontSize: 'clamp(1rem,2.5vw,1.8rem)', color: '#c9a84c', letterSpacing: '0.08em' }}>
-            — {slide.reference} <span style={{ color: '#555', fontSize: '0.75em' }}>({slide.translation})</span>
-          </p>
-          {slide.note && (
-            <p style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center', color: '#444', fontSize: 'clamp(0.8rem,1.5vw,1.1rem)', fontStyle: 'italic' }}>
-              {slide.note}
+      {/* Dark overlay so text stays readable over any image */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.62)' }} />
+
+      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', width: '100%' }}>
+        {!slide ? (
+          <p style={{ color: '#444', fontSize: '1.5rem' }}>Waiting for presenter…</p>
+        ) : slide.blank ? null : (
+          <>
+            <p style={{ fontSize: 'clamp(1.8rem,4.5vw,3.8rem)', lineHeight: 1.55, textAlign: 'center', marginBottom: '2rem', fontStyle: 'italic', color: '#f5f0e8' }}>
+              "{slide.text}"
             </p>
-          )}
-          {slide.title && (
-            <p style={{ position: 'absolute', top: 24, left: 32, color: '#333', fontSize: '0.9rem', letterSpacing: '0.1em' }}>{slide.title}</p>
-          )}
-          <p style={{ position: 'absolute', bottom: 24, right: 32, color: '#2a2a2a', fontSize: '0.85rem' }}>
-            {slide.index + 1} / {slide.total}
-          </p>
-        </>
-      )}
+            <p style={{ fontSize: 'clamp(1rem,2.5vw,1.8rem)', color: '#c9a84c', letterSpacing: '0.08em' }}>
+              — {slide.reference} <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75em' }}>({slide.translation})</span>
+            </p>
+            {slide.note && (
+              <p style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,0.45)', fontSize: 'clamp(0.8rem,1.5vw,1.1rem)', fontStyle: 'italic' }}>
+                {slide.note}
+              </p>
+            )}
+            {slide.title && (
+              <p style={{ position: 'absolute', top: 24, left: 32, color: 'rgba(255,255,255,0.3)', fontSize: '0.9rem', letterSpacing: '0.1em' }}>{slide.title}</p>
+            )}
+            <p style={{ position: 'absolute', bottom: 24, right: 32, color: 'rgba(255,255,255,0.2)', fontSize: '0.85rem' }}>
+              {slide.index + 1} / {slide.total}
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
