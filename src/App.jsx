@@ -33,6 +33,9 @@ const SUGGESTIONS = [
   "Who was Jesus, really?",
 ];
 
+const TRANSLATIONS = ['NLT', 'CSB', 'KJV', 'ESV'];
+const TRANSLATION_KEY = 'bible_buddies_translation';
+
 function welcomeMsg() {
   return {
     role: 'bot',
@@ -81,6 +84,9 @@ export default function App() {
   const [showTopicMenu, setShowTopicMenu] = useState(false);
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [translation, setTranslation] = useState(() =>
+    localStorage.getItem(TRANSLATION_KEY) || 'ESV'
+  );
   const bottomRef = useRef(null);
   const renameRef = useRef(null);
 
@@ -162,6 +168,11 @@ export default function App() {
     setShowTopicMenu(false);
   };
 
+  const changeTranslation = (t) => {
+    setTranslation(t);
+    localStorage.setItem(TRANSLATION_KEY, t);
+  };
+
   const updateMessages = (id, updater) => {
     setTopics(prev => prev.map(t => t.id === id ? { ...t, messages: updater(t.messages) } : t));
   };
@@ -185,7 +196,7 @@ export default function App() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText, history: historyForApi }),
+        body: JSON.stringify({ message: userText, history: historyForApi, translation }),
       });
       const data = await res.json();
       updateMessages(activeTopicId, msgs => [...msgs, {
@@ -338,8 +349,16 @@ export default function App() {
           </div>
         )}
 
-        <button className="icon-btn" aria-label="Profile">👤</button>
-      </header>
+        <select
+          className="translation-select"
+          value={translation}
+          onChange={e => changeTranslation(e.target.value)}
+          aria-label="Bible translation"
+        >
+          {TRANSLATIONS.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+
+        <button className="icon-btn" aria-label="Profile">👤</button>      </header>
 
       {renderTabContent()}
 

@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     }
 
   try {
-        const { message, history = [] } = req.body;
+        const { message, history = [], translation = 'ESV' } = req.body;
 
       if (!message) {
               return res.status(400).json({ error: 'Missing message in request body.' });
@@ -58,10 +58,10 @@ export default async function handler(req, res) {
             ];
 
       const payload = {
-              system_instruction: {
-                        parts: [{ text: SYSTEM_INSTRUCTION }],
-              },
-              contents,
+        system_instruction: {
+          parts: [{ text: SYSTEM_INSTRUCTION + `\n\nIMPORTANT: The user has selected the ${translation} Bible translation. Quote ALL Scripture using the ${translation} version.` }],
+        },
+        contents,
       };
 
       const response = await fetch(

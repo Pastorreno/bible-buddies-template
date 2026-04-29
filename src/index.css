@@ -539,3 +539,24 @@ body {
   color: var(--ink-light);
   margin-bottom: 2px;
 }
+
+/* ---- Translation selector ---- */
+.translation-select {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-family: 'Georgia', serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--ink);
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: border-color 0.15s;
+}
+
+.translation-select:hover,
+.translation-select:focus {
+  border-color: var(--crimson);
+  outline: none;
+}
