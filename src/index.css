@@ -515,3 +515,27 @@ body {
 .topic-menu-new:hover {
   background: rgba(139,26,43,0.06);
 }
+
+/* ---- Structured response sections ---- */
+.section-heading {
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--crimson);
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+.response-list {
+  padding-left: 18px;
+  margin: 4px 0;
+}
+
+.response-list li {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-light);
+  margin-bottom: 2px;
+}

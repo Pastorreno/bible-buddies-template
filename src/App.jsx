@@ -3,9 +3,17 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function renderMarkdown(text) {
   return text
+    // Section headers like **Short Answer** on their own line
+    .replace(/^\*\*([^*]+)\*\*$/gm, '<h3 class="section-heading">$1</h3>')
+    // Inline bold
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^#{1,3}\s(.+)$/gm, '<h3 class="font-bold text-crimson mt-3 mb-1 font-serif">$1</h3>')
+    // ATX headings
+    .replace(/^#{1,3}\s(.+)$/gm, '<h3 class="section-heading">$1</h3>')
+    // Bullet lists
+    .replace(/^[-•]\s(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul class="response-list">$1</ul>')
     .replace(/\n/g, '<br/>');
 }
 
