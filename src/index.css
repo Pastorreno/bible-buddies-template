@@ -385,3 +385,133 @@ body {
      line-height: 1.6;
      color: var(--muted);
 }
+
+/* ---- Topic Dropdown ---- */
+.topic-selector-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: 'Georgia', serif;
+  color: var(--ink);
+  max-width: 160px;
+  transition: border-color 0.15s;
+}
+
+.topic-selector-btn:hover {
+  border-color: var(--crimson);
+}
+
+.topic-selector-label {
+  font-size: 13px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.rename-input {
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  width: 120px;
+}
+
+.topic-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--parchment-light);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  min-width: 220px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.topic-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.topic-menu-item.active {
+  background: rgba(139,26,43,0.06);
+}
+
+.topic-menu-title {
+  flex: 1;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topic-menu-item.active .topic-menu-title {
+  color: var(--crimson);
+  font-weight: bold;
+}
+
+.topic-menu-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.topic-menu-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.topic-menu-actions button:hover {
+  color: var(--ink);
+  background: var(--border);
+}
+
+.topic-menu-actions button.danger:hover {
+  color: var(--crimson);
+}
+
+.topic-menu-new {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+  color: var(--crimson);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.15s;
+}
+
+.topic-menu-new:hover {
+  background: rgba(139,26,43,0.06);
+}

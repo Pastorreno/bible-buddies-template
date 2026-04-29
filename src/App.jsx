@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function renderMarkdown(text) {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -9,8 +9,13 @@ function renderMarkdown(text) {
     .replace(/\n/g, '<br/>');
 }
 
+function makeId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
-const VAULT_KEY = 'bible_buddies_vault_v1';
+const VAULT_KEY_V1 = 'bible_buddies_vault_v1';
+const VAULT_KEY_V2 = 'bible_buddies_vault_v2';
 
 const SUGGESTIONS = [
   "What does Romans 8:28 mean?",
@@ -20,55 +25,147 @@ const SUGGESTIONS = [
   "What is the Gospel?",
 ];
 
-const WELCOME_MSG = {
-  role: 'bot',
-  label: 'WELCOME',
-  text: 'Welcome to The Scriptorium. Ask me anything about Scripture — a verse, a theme, a theological question, or a life challenge. Deep truth awaits.',
-};
+function welcomeMsg() {
+  return {
+    role: 'bot',
+    label: 'WELCOME',
+    text: 'Welcome to The Scriptorium. Ask me anything about Scripture — a verse, a theme, a theological question, or a life challenge. Deep truth awaits.',
+  };
+}
+
+function newTopic(title = 'New Topic') {
+  return { id: makeId(), title, createdAt: Date.now(), messages: [welcomeMsg()] };
+}
+
+// ── LocalStorage helpers ──────────────────────────────────────────────────────
+function loadVault() {
+  try {
+    // Try v2 first
+    const v2 = localStorage.getItem(VAULT_KEY_V2);
+    if (v2) return JSON.parse(v2);
+
+    // Migrate v1 → v2
+    const v1 = localStorage.getItem(VAULT_KEY_V1);
+    if (v1) {
+      const { messages: savedMsgs } = JSON.parse(v1);
+      const general = { id: makeId(), title: 'General', createdAt: Date.now(), messages: savedMsgs || [welcomeMsg()] };
+      return { topics: [general], activeTopicId: general.id };
+    }
+  } catch (e) {
+    console.error('Vault load failed', e);
+  }
+  const first = newTopic('General');
+  return { topics: [first], activeTopicId: first.id };
+}
+
+function saveVault(topics, activeTopicId) {
+  localStorage.setItem(VAULT_KEY_V2, JSON.stringify({ topics, activeTopicId }));
+}
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [messages, setMessages] = useState([WELCOME_MSG]);
+  const [topics, setTopics] = useState([]);
+  const [activeTopicId, setActiveTopicId] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('study');
   const [vaultLoaded, setVaultLoaded] = useState(false);
+  const [showTopicMenu, setShowTopicMenu] = useState(false);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
   const bottomRef = useRef(null);
+  const renameRef = useRef(null);
 
-  // Persistence: load on mount
+  // Load on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(VAULT_KEY);
-      if (saved) {
-        const { messages: savedMsgs, lastTab } = JSON.parse(saved);
-        if (savedMsgs && savedMsgs.length > 0) setMessages(savedMsgs);
-        if (lastTab) setActiveTab(lastTab);
-      }
-    } catch (e) {
-      console.error('Vault load failed, starting fresh.', e);
-    }
+    const { topics: t, activeTopicId: id } = loadVault();
+    setTopics(t);
+    setActiveTopicId(id);
     setVaultLoaded(true);
   }, []);
 
-  // Persistence: save on change
+  // Save on change
   useEffect(() => {
     if (!vaultLoaded) return;
-    localStorage.setItem(VAULT_KEY, JSON.stringify({ messages, lastTab: activeTab }));
-  }, [messages, activeTab, vaultLoaded]);
+    saveVault(topics, activeTopicId);
+  }, [topics, activeTopicId, vaultLoaded]);
 
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [topics, activeTopicId, loading]);
 
-  // Send message
+  // Focus rename input
+  useEffect(() => {
+    if (renamingId) renameRef.current?.focus();
+  }, [renamingId]);
+
+  const activeTopic = topics.find(t => t.id === activeTopicId);
+  const messages = activeTopic?.messages || [];
+
+  // ── Topic actions ─────────────────────────────────────────────────────────
+  const createTopic = () => {
+    const t = newTopic('New Topic');
+    setTopics(prev => [...prev, t]);
+    setActiveTopicId(t.id);
+    setShowTopicMenu(false);
+    // immediately enter rename
+    setRenamingId(t.id);
+    setRenameValue('New Topic');
+  };
+
+  const switchTopic = (id) => {
+    setActiveTopicId(id);
+    setShowTopicMenu(false);
+  };
+
+  const startRename = (t) => {
+    setRenamingId(t.id);
+    setRenameValue(t.title);
+    setShowTopicMenu(false);
+  };
+
+  const commitRename = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed) {
+      setTopics(prev => prev.map(t => t.id === renamingId ? { ...t, title: trimmed } : t));
+    }
+    setRenamingId(null);
+  };
+
+  const deleteTopic = (id) => {
+    if (!window.confirm('Delete this topic and all its messages?')) return;
+    setTopics(prev => {
+      const next = prev.filter(t => t.id !== id);
+      if (next.length === 0) {
+        const fresh = newTopic('General');
+        setActiveTopicId(fresh.id);
+        return [fresh];
+      }
+      if (id === activeTopicId) setActiveTopicId(next[0].id);
+      return next;
+    });
+    setShowTopicMenu(false);
+  };
+
+  const clearTopic = (id) => {
+    if (!window.confirm('Clear all messages in this topic?')) return;
+    setTopics(prev => prev.map(t => t.id === id ? { ...t, messages: [welcomeMsg()] } : t));
+    setShowTopicMenu(false);
+  };
+
+  const updateMessages = (id, updater) => {
+    setTopics(prev => prev.map(t => t.id === id ? { ...t, messages: updater(t.messages) } : t));
+  };
+
+  // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text) => {
     const userText = text || input.trim();
-    if (!userText) return;
+    if (!userText || !activeTopicId) return;
     setInput('');
 
     const userMsg = { role: 'user', text: userText };
-    setMessages(prev => [...prev, userMsg]);
+    updateMessages(activeTopicId, msgs => [...msgs, userMsg]);
     setLoading(true);
 
     const historyForApi = messages
@@ -83,36 +180,28 @@ export default function App() {
         body: JSON.stringify({ message: userText, history: historyForApi }),
       });
       const data = await res.json();
-      setMessages(prev => [...prev, {
+      updateMessages(activeTopicId, msgs => [...msgs, {
         role: 'bot',
         label: 'THEOLOGICAL INSIGHT',
         text: data.reply || 'No response received.',
       }]);
     } catch {
-      setMessages(prev => [...prev, {
+      updateMessages(activeTopicId, msgs => [...msgs, {
         role: 'bot',
         label: 'ERROR',
         text: 'Could not connect to the server. Please try again.',
       }]);
     }
     setLoading(false);
-  }, [input, messages]);
+  }, [input, messages, activeTopicId]);
 
-  // Clear memory
-  const clearMemory = () => {
-    if (window.confirm('Clear all conversation history from memory?')) {
-      setMessages([WELCOME_MSG]);
-      localStorage.removeItem(VAULT_KEY);
-    }
-  };
-
-  // Tab content
+  // ── Render ────────────────────────────────────────────────────────────────
   const renderTabContent = () => {
     if (activeTab === 'scripture') {
       return (
         <div className="tab-content-panel">
           <div className="tab-placeholder">
-            <span style={{ fontSize: '3rem' }}>&#128214;</span>
+            <span style={{ fontSize: '3rem' }}>📖</span>
             <h2>Sacred Texts</h2>
             <p>Scripture browsing coming soon. Use the Study tab to ask about any verse or passage.</p>
           </div>
@@ -124,20 +213,14 @@ export default function App() {
       return (
         <div className="tab-content-panel">
           <div className="tab-placeholder">
-            <span style={{ fontSize: '3rem' }}>&#9998;</span>
+            <span style={{ fontSize: '3rem' }}>✎</span>
             <h2>Knowledge Assessment</h2>
-            <p>Assessment features coming soon. Your study history is saved and will power quizzes here.</p>
-            {messages.length > 1 && (
-              <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>
-                {messages.filter(m => m.role === 'user').length} question(s) recorded in your vault.
-              </p>
-            )}
+            <p>Assessment features coming soon.</p>
           </div>
         </div>
       );
     }
 
-    // Default: study tab
     return (
       <React.Fragment>
         <main className="chat-area">
@@ -149,20 +232,17 @@ export default function App() {
               </div>
             ) : (
               <div key={i} className="insight-block">
-                <div className="insight-avatar">&#10024;</div>
+                <div className="insight-avatar">✨</div>
                 <div className="insight-content">
                   {msg.label && <span className="block-label insight-label">{msg.label}</span>}
-                  <div
-                    className="insight-text"
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
-                  />
+                  <div className="insight-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
                 </div>
               </div>
             )
           ))}
           {loading && (
             <div className="insight-block">
-              <div className="insight-avatar">&#10024;</div>
+              <div className="insight-avatar">✨</div>
               <div className="insight-content">
                 <span className="block-label insight-label">THINKING</span>
                 <div className="typing-dots"><span /><span /><span /></div>
@@ -190,9 +270,7 @@ export default function App() {
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               disabled={loading}
             />
-            <button className="send-btn" onClick={() => sendMessage()} disabled={loading}>
-              SEND
-            </button>
+            <button className="send-btn" onClick={() => sendMessage()} disabled={loading}>SEND</button>
           </div>
           <p className="disclaimer">Don&#8217;t just take my word for it. Always verify by reading the full chapter yourself.</p>
         </div>
@@ -204,39 +282,70 @@ export default function App() {
     <div className="scriptorium-app">
       <header className="scriptorium-header">
         <div className="header-brand">
-          <span className="header-icon">&#128214;</span>
+          <span className="header-icon">📖</span>
           <span className="header-title">The Scriptorium</span>
         </div>
-        <div className="header-actions">
-          <button className="icon-btn" aria-label="Clear memory" onClick={clearMemory} title="Clear conversation memory">
-            &#128465;
-          </button>
-          <button className="icon-btn" aria-label="Profile">&#128100;</button>
-        </div>
+
+        {/* Topic dropdown (study tab only) */}
+        {activeTab === 'study' && (
+          <div style={{ position: 'relative' }}>
+            <button
+              className="topic-selector-btn"
+              onClick={() => setShowTopicMenu(p => !p)}
+              title="Switch topic"
+            >
+              {renamingId === activeTopicId ? (
+                <input
+                  ref={renameRef}
+                  className="rename-input"
+                  value={renameValue}
+                  onChange={e => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={e => { if (e.key === 'Enter') commitRename(); e.stopPropagation(); }}
+                  onClick={e => e.stopPropagation()}
+                />
+              ) : (
+                <>
+                  <span className="topic-selector-label">{activeTopic?.title || 'Topics'}</span>
+                  <span style={{ fontSize: 10, marginLeft: 4 }}>▾</span>
+                </>
+              )}
+            </button>
+
+            {showTopicMenu && (
+              <div className="topic-menu">
+                {topics.map(t => (
+                  <div key={t.id} className={`topic-menu-item ${t.id === activeTopicId ? 'active' : ''}`}>
+                    <button className="topic-menu-title" onClick={() => switchTopic(t.id)}>{t.title}</button>
+                    <div className="topic-menu-actions">
+                      <button onClick={() => startRename(t)} title="Rename">✎</button>
+                      <button onClick={() => clearTopic(t.id)} title="Clear">↺</button>
+                      <button onClick={() => deleteTopic(t.id)} title="Delete" className="danger">✕</button>
+                    </div>
+                  </div>
+                ))}
+                <button className="topic-menu-new" onClick={createTopic}>+ New Topic</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <button className="icon-btn" aria-label="Profile">👤</button>
       </header>
 
       {renderTabContent()}
 
       <nav className="bottom-nav">
-        <button
-          className={`nav-item ${activeTab === 'scripture' ? 'active' : ''}`}
-          onClick={() => setActiveTab('scripture')}
-        >
-          <span className="nav-icon">&#128214;</span>
+        <button className={`nav-item ${activeTab === 'scripture' ? 'active' : ''}`} onClick={() => setActiveTab('scripture')}>
+          <span className="nav-icon">📖</span>
           <span>SCRIPTURE</span>
         </button>
-        <button
-          className={`nav-item ${activeTab === 'study' ? 'active' : ''}`}
-          onClick={() => setActiveTab('study')}
-        >
-          <span className="nav-icon">&#10024;</span>
+        <button className={`nav-item ${activeTab === 'study' ? 'active' : ''}`} onClick={() => setActiveTab('study')}>
+          <span className="nav-icon">✨</span>
           <span>STUDY</span>
         </button>
-        <button
-          className={`nav-item ${activeTab === 'assess' ? 'active' : ''}`}
-          onClick={() => setActiveTab('assess')}
-        >
-          <span className="nav-icon">&#9998;</span>
+        <button className={`nav-item ${activeTab === 'assess' ? 'active' : ''}`} onClick={() => setActiveTab('assess')}>
+          <span className="nav-icon">✎</span>
           <span>ASSESS</span>
         </button>
       </nav>
