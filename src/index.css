@@ -1186,3 +1186,55 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Catechism ───────────────────────────────────────────────────────────── */
+.catechism-card {
+  background: #1a1208;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.catechism-q {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c9a84c;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.catechism-a {
+  font-family: 'Lora', Georgia, serif;
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #f5f0e8;
+}
+
+/* ── ETS Academy card ────────────────────────────────────────────────────── */
+.ets-card {
+  text-decoration: none;
+  border-color: var(--crimson) !important;
+  background: rgba(139,26,43,0.04);
+}
+
+/* ── Reading plan progress ───────────────────────────────────────────────── */
+.plan-progress-wrap {
+  background: var(--user-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.plan-progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.plan-progress-fill {
+  height: 100%;
+  background: var(--crimson);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import SeriesTab from './SeriesTab';
+import ReadingPlanTab from './ReadingPlanTab';
+import CatechismTab from './CatechismTab';
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
@@ -154,6 +156,20 @@ export default function LessonsTab({ topics, translation }) {
         <p className="assess-desc">Seminary-quality study tools for individuals, small groups, and leaders.</p>
       </div>
       <div className="lessons-cards">
+        <button className="lesson-card" onClick={() => setMode('plan')}>
+          <span className="lesson-card-icon">📅</span>
+          <div>
+            <p className="lesson-card-title">Reading Plan</p>
+            <p className="lesson-card-desc">30, 60, or 90-day personalized plan with daily passage, reflection, and prayer.</p>
+          </div>
+        </button>
+        <button className="lesson-card" onClick={() => setMode('catechism')}>
+          <span className="lesson-card-icon">📜</span>
+          <div>
+            <p className="lesson-card-title">Catechism</p>
+            <p className="lesson-card-desc">Classic Q&A doctrine with proof texts. Westminster, Heidelberg, Baptist.</p>
+          </div>
+        </button>
         <button className="lesson-card" onClick={() => setMode('series')}>
           <span className="lesson-card-icon">📖</span>
           <div>
@@ -175,10 +191,21 @@ export default function LessonsTab({ topics, translation }) {
             <p className="lesson-card-desc">Test your understanding with questions drawn from your study topics.</p>
           </div>
         </button>
+        {/* ETS Academy */}
+        <a className="lesson-card ets-card" href="https://t.me/etsacademy" target="_blank" rel="noopener noreferrer">
+          <span className="lesson-card-icon">🎓</span>
+          <div>
+            <p className="lesson-card-title">ETS Academy</p>
+            <p className="lesson-card-desc">Join the discipleship training community on Telegram. Go deeper with others.</p>
+          </div>
+          <span style={{ fontSize: 18, color: 'var(--crimson)', flexShrink: 0 }}>→</span>
+        </a>
       </div>
     </div>
   );
 
+  if (mode === 'plan') return <ReadingPlanTab translation={translation} onBack={() => setMode(null)} />;
+  if (mode === 'catechism') return <CatechismTab translation={translation} onBack={() => setMode(null)} />;
   if (mode === 'series') return <SeriesTab translation={translation} onBack={() => setMode(null)} />;
 
   // ── Lesson Builder ─────────────────────────────────────────────────────────
