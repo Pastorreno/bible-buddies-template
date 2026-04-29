@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ScriptureTab from './ScriptureTab';
-import AssessTab from './AssessTab';
+import LessonsTab from './LessonsTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -219,11 +219,11 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
   const renderTabContent = () => {
     if (activeTab === 'scripture') {
-      return <ScriptureTab translation={translation} />;
+      return <ScriptureTab translation={translation} onAskBuddy={(text) => { setActiveTab('study'); sendMessage(text); }} />;
     }
 
-    if (activeTab === 'assess') {
-      return <AssessTab topics={topics} translation={translation} />;
+    if (activeTab === 'lessons') {
+      return <LessonsTab topics={topics} translation={translation} />;
     }
 
     return (
@@ -357,9 +357,9 @@ export default function App() {
           <span className="nav-icon">✨</span>
           <span>STUDY</span>
         </button>
-        <button className={`nav-item ${activeTab === 'assess' ? 'active' : ''}`} onClick={() => setActiveTab('assess')}>
+        <button className={`nav-item ${activeTab === 'lessons' ? 'active' : ''}`} onClick={() => setActiveTab('lessons')}>
           <span className="nav-icon">✎</span>
-          <span>ASSESS</span>
+          <span>LESSONS</span>
         </button>
       </nav>
     </div>
