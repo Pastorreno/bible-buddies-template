@@ -26,11 +26,11 @@ const VAULT_KEY_V1 = 'bible_buddies_vault_v1';
 const VAULT_KEY_V2 = 'bible_buddies_vault_v2';
 
 const SUGGESTIONS = [
+  "What does it mean to be saved?",
   "What does Romans 8:28 mean?",
   "Explain the Sermon on the Mount",
-  "Who was the Apostle Paul?",
-  "How do I study the Bible deeply?",
-  "What is the Gospel?",
+  "What is the doctrine of grace?",
+  "Who was Jesus, really?",
 ];
 
 function welcomeMsg() {
