@@ -40,7 +40,7 @@ function welcomeMsg() {
   return {
     role: 'bot',
     label: 'WELCOME',
-    text: 'Welcome to The Scriptorium. Ask me anything about Scripture — a verse, a theme, a theological question, or a life challenge. Deep truth awaits.',
+    text: 'Welcome to Bible Buddy! Ask me anything about Scripture — a verse, a theme, a theological question, or a life challenge. Deep truth awaits.',
   };
 }
 
@@ -302,7 +302,7 @@ export default function App() {
       <header className="scriptorium-header">
         <div className="header-brand">
           <span className="header-icon">📖</span>
-          <span className="header-title">The Scriptorium</span>
+          <span className="header-title">Bible Buddy</span>
         </div>
 
         {/* Topic dropdown (study tab only) */}
