@@ -89,15 +89,54 @@ async function fetchAOChapter(book, chapter) {
 }
 
 const COMMENTARIES = [
-  { id: 'adam-clarke',          label: 'Adam Clarke' },
-  { id: 'matthew-henry',        label: 'Matthew Henry' },
+  { id: 'bible-buddy-exegesis',   label: '✦ Bible Buddy Exegesis' },
+  { id: 'adam-clarke',            label: 'Adam Clarke' },
+  { id: 'matthew-henry',          label: 'Matthew Henry' },
   { id: 'jamieson-fausset-brown', label: 'Jamieson-Fausset-Brown' },
-  { id: 'john-gill',            label: 'John Gill' },
-  { id: 'keil-delitzsch',       label: 'Keil & Delitzsch (OT)' },
-  { id: 'tyndale',              label: 'Tyndale Study Notes' },
+  { id: 'john-gill',              label: 'John Gill' },
+  { id: 'keil-delitzsch',         label: 'Keil & Delitzsch (OT)' },
+  { id: 'tyndale',                label: 'Tyndale Study Notes' },
 ];
 
+// In-memory cache for AI exegesis (persists while tab is open)
+const exegesisCache = {};
+
+async function fetchExegesis(book, chapter, translation) {
+  const key = `${book}-${chapter}-${translation}`;
+  if (exegesisCache[key]) return exegesisCache[key];
+
+  const prompt =
+    `You are a biblical scholar writing a verse-by-verse exegetical commentary on ${book} chapter ${chapter} (${translation} translation).\n\n` +
+    `Use the historical-grammatical method with systematic theology. Structure your commentary EXACTLY as follows:\n\n` +
+    `## Historical Setting\n` +
+    `Author, date, original audience, occasion for writing, and the political/cultural/religious context of the original readers.\n\n` +
+    `## Grammatical & Linguistic Analysis\n` +
+    `Identify 3-5 key Greek or Hebrew words in this chapter. For each: give the original term (transliterated), its literal meaning, its grammatical form, and why it matters for interpretation.\n\n` +
+    `## Literary Context\n` +
+    `The genre of this passage, its structure, how it fits within the book's overall argument, and what immediately precedes and follows.\n\n` +
+    `## Verse-by-Verse Exegesis\n` +
+    `Work through the key verses of the chapter with scholarly commentary. Reference the original languages where significant. Cite relevant scholars (D.A. Carson, Douglas Moo, Thomas Schreiner, N.T. Wright, F.F. Bruce, Leon Morris, etc.) where appropriate.\n\n` +
+    `## Systematic Theology\n` +
+    `What doctrine(s) does this chapter establish or develop? Name the doctrinal category (soteriology, Christology, pneumatology, etc.), explain the doctrine clearly, and show how this passage contributes to it.\n\n` +
+    `## Redemptive-Historical Thread\n` +
+    `Where does this passage fit in the story of redemption? Trace the OT background, the fulfillment in Christ, and the eschatological completion.\n\n` +
+    `## Scholarly Debates\n` +
+    `Note 1-2 significant interpretive debates among scholars regarding this chapter. Present the main positions fairly without taking sides.\n\n` +
+    `⚠️ DISCLAIMER: This exegesis is based on established historical-grammatical scholarship. Always verify through personal study of the primary text and the scholarly sources cited. The goal is to equip you to read the Bible, not to replace it.`;
+
+  const r = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  const d = await r.json();
+  const text = d.text || '';
+  exegesisCache[key] = text;
+  return text;
+}
+
 async function fetchCommentary(book, chapter, commentaryId = 'adam-clarke') {
+  if (commentaryId === 'bible-buddy-exegesis') return null; // handled separately
   const id = BOOK_ID[book];
   if (!id) return null;
   try {
@@ -148,7 +187,9 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
   const [chapterLoading, setChapterLoading] = useState(false);
   const [showCommentary, setShowCommentary] = useState(false);
   const [expandedCrossRef, setExpandedCrossRef] = useState(null);
-  const [selectedCommentary, setSelectedCommentary] = useState('adam-clarke');
+  const [selectedCommentary, setSelectedCommentary] = useState('bible-buddy-exegesis');
+  const [exegesis, setExegesis] = useState(null);
+  const [exegesisLoading, setExegesisLoading] = useState(false);
   const [wordStudy, setWordStudy] = useState(null); // {reference, text}
 
   useEffect(() => {
@@ -160,7 +201,14 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
   // Reload commentary when user switches commentaries (only if chapter is already loaded)
   useEffect(() => {
     if (!chapterData) return;
-    fetchCommentary(book, chapter, selectedCommentary).then(setCommentary);
+    if (selectedCommentary === 'bible-buddy-exegesis') {
+      setExegesis(null);
+      setExegesisLoading(true);
+      fetchExegesis(book, chapter, translation).then(t => { setExegesis(t); setExegesisLoading(false); });
+    } else {
+      setExegesis(null);
+      fetchCommentary(book, chapter, selectedCommentary).then(setCommentary);
+    }
   }, [selectedCommentary]);
 
   const loadChapter = async () => {
@@ -168,22 +216,31 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
     setChapterData(null);
     setShepherdData(null);
     setCommentary(null);
+    setExegesis(null);
     setCrossRefs(null);
     setShowCommentary(false);
     setExpandedCrossRef(null);
 
-    const [ao, shepherd, clarke, refs] = await Promise.all([
+    const isExegesis = selectedCommentary === 'bible-buddy-exegesis';
+
+    const [ao, shepherd, commentaryData, refs] = await Promise.all([
       fetchAOChapter(book, chapter),
       fetchShepherdChapter(book, chapter),
-      fetchCommentary(book, chapter, selectedCommentary),
+      isExegesis ? Promise.resolve(null) : fetchCommentary(book, chapter, selectedCommentary),
       fetchCrossRefs(book, chapter),
     ]);
 
     setChapterData(ao);
     setShepherdData(shepherd?.data || null);
-    setCommentary(clarke);
+    setCommentary(commentaryData);
     setCrossRefs(refs);
     setChapterLoading(false);
+
+    // Fetch exegesis after chapter loads (non-blocking)
+    if (isExegesis) {
+      setExegesisLoading(true);
+      fetchExegesis(book, chapter, translation).then(t => { setExegesis(t); setExegesisLoading(false); });
+    }
   };
 
   const handleSearch = async (e) => {
@@ -352,30 +409,45 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
               </div>
             ))}
 
-            {commentary && (
-              <div className="commentary-section">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                  <button className="commentary-toggle" onClick={() => setShowCommentary(p => !p)}>
-                    {showCommentary ? '▲' : '▼'} Commentary
-                  </button>
-                  <select className="scripture-select" style={{ flex: 1, fontSize: 12, padding: '4px 8px' }}
-                    value={selectedCommentary}
-                    onChange={e => { setSelectedCommentary(e.target.value); setCommentary(null); setShowCommentary(false); }}>
-                    {COMMENTARIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-                  </select>
-                </div>
-                {showCommentary && commentary.verses && (
-                  <div className="commentary-body">
-                    {commentary.verses.slice(0, 8).map((v, i) => v.commentary && (
-                      <div key={i} className="commentary-verse">
-                        <span className="commentary-ref">Verse {v.verse}</span>
-                        <p className="commentary-text">{v.commentary}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {/* Commentary / Exegesis section */}
+            <div className="commentary-section">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <button className="commentary-toggle" onClick={() => setShowCommentary(p => !p)}>
+                  {showCommentary ? '▲' : '▼'} Commentary
+                </button>
+                <select className="scripture-select" style={{ flex: 1, fontSize: 12, padding: '4px 8px' }}
+                  value={selectedCommentary}
+                  onChange={e => { setSelectedCommentary(e.target.value); setCommentary(null); setExegesis(null); setShowCommentary(false); }}>
+                  {COMMENTARIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
               </div>
-            )}
+
+              {showCommentary && selectedCommentary === 'bible-buddy-exegesis' && (
+                exegesisLoading
+                  ? <div className="typing-dots" style={{ marginTop: 8 }}><span /><span /><span /></div>
+                  : exegesis
+                    ? <div className="commentary-body">
+                        <div dangerouslySetInnerHTML={{ __html:
+                          exegesis
+                            .replace(/^## (.+)$/gm, '<p class="commentary-ref" style="margin-top:14px">$1</p>')
+                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n/g, '<br/>')
+                        }} />
+                      </div>
+                    : <p className="scripture-muted">Load a chapter to generate exegesis.</p>
+              )}
+
+              {showCommentary && selectedCommentary !== 'bible-buddy-exegesis' && commentary?.verses && (
+                <div className="commentary-body">
+                  {commentary.verses.slice(0, 8).map((v, i) => v.commentary && (
+                    <div key={i} className="commentary-verse">
+                      <span className="commentary-ref">Verse {v.verse}</span>
+                      <p className="commentary-text">{v.commentary}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
