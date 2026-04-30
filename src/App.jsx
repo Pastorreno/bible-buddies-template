@@ -335,19 +335,22 @@ export default function App() {
                   </div>
                 ))}
                 <button className="topic-menu-new" onClick={createTopic}>+ New Topic</button>
+                <div style={{ padding: '10px 14px', borderTop: '1px solid var(--navy-3)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.1em' }}>TRANSLATION</span>
+                  <select className="translation-select" value={translation} onChange={e => changeTranslation(e.target.value)} style={{ flex: 1 }}>
+                    {TRANSLATIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               </div>
             )}
           </div>
         )}
 
-        <select
-          className="translation-select"
-          value={translation}
-          onChange={e => changeTranslation(e.target.value)}
-          aria-label="Bible translation"
-        >
-          {TRANSLATIONS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        {activeTab !== 'study' && (
+          <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', background: 'var(--navy-3)', borderRadius: 6, padding: '4px 8px', letterSpacing: '0.06em' }}>
+            {translation}
+          </span>
+        )}
 
         <button className="icon-btn" aria-label="Profile">👤</button>      </header>
 
