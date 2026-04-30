@@ -1238,3 +1238,87 @@ body {
   border-radius: 3px;
   transition: width 0.4s ease;
 }
+
+/* ── Word Study Panel ────────────────────────────────────────────────────── */
+.word-study-panel {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border-top: 2px solid var(--crimson);
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  z-index: 200;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+}
+
+.word-study-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.word-study-verse {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--ink-2);
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.tappable-word {
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.1s;
+  padding: 1px 2px;
+}
+.tappable-word:hover { background: rgba(139,26,43,0.1); }
+.tappable-word.selected { background: rgba(139,26,43,0.15); color: var(--crimson); font-weight: 600; }
+
+.word-study-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.word-study-original {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.word-study-term {
+  font-size: 22px;
+  font-family: 'Lora', Georgia, serif;
+  color: var(--crimson);
+  font-style: italic;
+}
+
+.word-study-lang {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.word-study-literal {
+  font-size: 13px;
+  color: var(--gold);
+  font-style: italic;
+}
+
+.word-study-def {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.6;
+  font-weight: 500;
+}

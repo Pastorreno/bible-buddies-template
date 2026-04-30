@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SeriesTab from './SeriesTab';
 import ReadingPlanTab from './ReadingPlanTab';
 import CatechismTab from './CatechismTab';
+import PrayerJournal from './PrayerJournal';
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
@@ -163,6 +164,13 @@ export default function LessonsTab({ topics, translation }) {
             <p className="lesson-card-desc">30, 60, or 90-day personalized plan with daily passage, reflection, and prayer.</p>
           </div>
         </button>
+        <button className="lesson-card" onClick={() => setMode('prayer')}>
+          <span className="lesson-card-icon">🙏</span>
+          <div>
+            <p className="lesson-card-title">Prayer Journal</p>
+            <p className="lesson-card-desc">Log prayers tied to Scripture. Track answered prayers and see patterns over time.</p>
+          </div>
+        </button>
         <button className="lesson-card" onClick={() => setMode('catechism')}>
           <span className="lesson-card-icon">📜</span>
           <div>
@@ -205,6 +213,7 @@ export default function LessonsTab({ topics, translation }) {
   );
 
   if (mode === 'plan') return <ReadingPlanTab translation={translation} onBack={() => setMode(null)} />;
+  if (mode === 'prayer') return <PrayerJournal translation={translation} onBack={() => setMode(null)} />;
   if (mode === 'catechism') return <CatechismTab translation={translation} onBack={() => setMode(null)} />;
   if (mode === 'series') return <SeriesTab translation={translation} onBack={() => setMode(null)} />;
 

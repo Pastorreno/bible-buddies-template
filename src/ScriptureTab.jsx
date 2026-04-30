@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import WordStudy from './WordStudy';
 
 const BOOKS = [
   'Genesis','Exodus','Leviticus','Numbers','Deuteronomy','Joshua','Judges','Ruth',
@@ -116,6 +117,7 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
   const [chapterLoading, setChapterLoading] = useState(false);
   const [showCommentary, setShowCommentary] = useState(false);
   const [expandedCrossRef, setExpandedCrossRef] = useState(null);
+  const [wordStudy, setWordStudy] = useState(null); // {reference, text}
 
   useEffect(() => {
     fetchVotd(translation)
@@ -283,6 +285,11 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
                 <div className="verse-line">
                   <span className="verse-num">{v.verse}</span>
                   <span className="verse-text">{v.text}</span>
+                  <button
+                    className="cross-ref-btn"
+                    onClick={() => setWordStudy({ reference: `${book} ${chapter}:${v.verse}`, text: v.text })}
+                    title="Word study"
+                  >αβ</button>
                   {crossRefMap[v.verse] && (
                     <button
                       className="cross-ref-btn"
@@ -327,6 +334,16 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
           </div>
         )}
       </section>
+
+      {/* Word Study panel */}
+      {wordStudy && (
+        <WordStudy
+          reference={wordStudy.reference}
+          verseText={wordStudy.text}
+          translation={translation}
+          onClose={() => setWordStudy(null)}
+        />
+      )}
     </div>
   );
 }
