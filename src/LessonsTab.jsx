@@ -192,7 +192,7 @@ export default function LessonsTab({ topics, translation }) {
           </div>
         </button>
         {/* ETS Academy */}
-        <a className="lesson-card ets-card" href="https://t.me/etsacademy" target="_blank" rel="noopener noreferrer">
+        <a className="lesson-card ets-card" href="https://t.me/leadershippipelinebot" target="_blank" rel="noopener noreferrer">
           <span className="lesson-card-icon">🎓</span>
           <div>
             <p className="lesson-card-title">ETS Academy</p>
