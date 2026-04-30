@@ -62,12 +62,29 @@ async function fetchVotd(translation) {
   return r.json();
 }
 
-async function fetchAOChapter(book, chapter, translation = 'BSB') {
+async function fetchAOChapter(book, chapter) {
   const id = BOOK_ID[book];
   if (!id) return null;
   try {
-    const r = await fetch(`${AO}/${translation}/${id}/${chapter}.json`);
-    return r.ok ? r.json() : null;
+    const r = await fetch(`${AO}/BSB/${id}/${chapter}.json`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    const content = d?.chapter?.content || [];
+    const verses = [];
+    let currentHeading = null;
+    for (const item of content) {
+      if (item.type === 'heading') {
+        currentHeading = item.content?.join('') || null;
+      } else if (item.type === 'verse') {
+        const text = item.content
+          .filter(c => typeof c === 'string')
+          .join('')
+          .trim();
+        verses.push({ verse: item.number, text, heading: currentHeading });
+        currentHeading = null; // only attach heading to first verse after it
+      }
+    }
+    return { verses };
   } catch { return null; }
 }
 
@@ -89,10 +106,19 @@ async function fetchCrossRefs(book, chapter) {
   } catch { return null; }
 }
 
-async function searchVerses(query) {
+async function searchVerses(query, translation) {
   try {
-    const r = await fetch(`${SHEPHERD}/search?q=${encodeURIComponent(query)}&translation=KJV`);
-    return r.ok ? r.json() : null;
+    const r = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: `Find 8 Bible verses related to the topic or keyword: "${query}". Use the ${translation} translation.\nReply with ONLY this JSON (no markdown):\n{"data":[{"book":"BookName","chapter":1,"verse":1,"text":"full verse text"}]}`
+      }),
+    });
+    const d = await r.json();
+    return JSON.parse(d.text);
+  } catch { return null; }
+}
   } catch { return null; }
 }
 
@@ -151,7 +177,7 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
     if (!searchQuery.trim()) return;
     setSearchLoading(true);
     setSearchResults(null);
-    const data = await searchVerses(searchQuery.trim());
+    const data = await searchVerses(searchQuery.trim(), translation);
     setSearchResults(data?.data || []);
     setSearchLoading(false);
   };
@@ -277,8 +303,8 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
 
             {chapterData.verses.map((v, i) => (
               <div key={i} className="verse-row">
-                {sectionMap[v.verse] && (
-                  <p className="section-title">{sectionMap[v.verse]}</p>
+                {v.heading && (
+                  <p className="section-title">{v.heading}</p>
                 )}
                 <div className="verse-line">
                   <span className="verse-num">{v.verse}</span>
