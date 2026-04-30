@@ -88,11 +88,20 @@ async function fetchAOChapter(book, chapter) {
   } catch { return null; }
 }
 
-async function fetchCommentary(book, chapter) {
+const COMMENTARIES = [
+  { id: 'adam-clarke',          label: 'Adam Clarke' },
+  { id: 'matthew-henry',        label: 'Matthew Henry' },
+  { id: 'jamieson-fausset-brown', label: 'Jamieson-Fausset-Brown' },
+  { id: 'john-gill',            label: 'John Gill' },
+  { id: 'keil-delitzsch',       label: 'Keil & Delitzsch (OT)' },
+  { id: 'tyndale',              label: 'Tyndale Study Notes' },
+];
+
+async function fetchCommentary(book, chapter, commentaryId = 'adam-clarke') {
   const id = BOOK_ID[book];
   if (!id) return null;
   try {
-    const r = await fetch(`${AO}/c/adam-clarke/${id}/${chapter}.json`);
+    const r = await fetch(`${AO}/c/${commentaryId}/${id}/${chapter}.json`);
     return r.ok ? r.json() : null;
   } catch { return null; }
 }
@@ -139,6 +148,7 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
   const [chapterLoading, setChapterLoading] = useState(false);
   const [showCommentary, setShowCommentary] = useState(false);
   const [expandedCrossRef, setExpandedCrossRef] = useState(null);
+  const [selectedCommentary, setSelectedCommentary] = useState('adam-clarke');
   const [wordStudy, setWordStudy] = useState(null); // {reference, text}
 
   useEffect(() => {
@@ -146,6 +156,12 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
       .then(d => setVotd(d))
       .finally(() => setVotdLoading(false));
   }, [translation]);
+
+  // Reload commentary when user switches commentaries (only if chapter is already loaded)
+  useEffect(() => {
+    if (!chapterData) return;
+    fetchCommentary(book, chapter, selectedCommentary).then(setCommentary);
+  }, [selectedCommentary]);
 
   const loadChapter = async () => {
     setChapterLoading(true);
@@ -159,7 +175,7 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
     const [ao, shepherd, clarke, refs] = await Promise.all([
       fetchAOChapter(book, chapter),
       fetchShepherdChapter(book, chapter),
-      fetchCommentary(book, chapter),
+      fetchCommentary(book, chapter, selectedCommentary),
       fetchCrossRefs(book, chapter),
     ]);
 
@@ -338,9 +354,16 @@ export default function ScriptureTab({ translation, onAskBuddy }) {
 
             {commentary && (
               <div className="commentary-section">
-                <button className="commentary-toggle" onClick={() => setShowCommentary(p => !p)}>
-                  {showCommentary ? '▲' : '▼'} Adam Clarke Commentary
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <button className="commentary-toggle" onClick={() => setShowCommentary(p => !p)}>
+                    {showCommentary ? '▲' : '▼'} Commentary
+                  </button>
+                  <select className="scripture-select" style={{ flex: 1, fontSize: 12, padding: '4px 8px' }}
+                    value={selectedCommentary}
+                    onChange={e => { setSelectedCommentary(e.target.value); setCommentary(null); setShowCommentary(false); }}>
+                    {COMMENTARIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
+                </div>
                 {showCommentary && commentary.verses && (
                   <div className="commentary-body">
                     {commentary.verses.slice(0, 8).map((v, i) => v.commentary && (
