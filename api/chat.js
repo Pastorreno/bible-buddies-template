@@ -50,6 +50,12 @@ const SYSTEM_INSTRUCTION =
   'Never speculate beyond what the text and verified historical record support. If something is debated among scholars, say so and present the main positions fairly.';
 
 
+const { findCachedAnswer } = require('./theologyCache');
+
+// In-memory cache — persists while the serverless function is warm (~5 min on Vercel)
+const memCache = new Map();
+const MEM_CACHE_MAX = 100;
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
           return res.status(405).json({ error: 'Method Not Allowed' });
@@ -60,6 +66,18 @@ export default async function handler(req, res) {
 
       if (!message) {
               return res.status(400).json({ error: 'Missing message in request body.' });
+      }
+
+      // ── Layer 1: Static theology cache ──────────────────────────────────
+      const staticAnswer = findCachedAnswer(message);
+      if (staticAnswer) {
+        return res.status(200).json({ reply: staticAnswer, cached: true });
+      }
+
+      // ── Layer 2: In-memory cache ─────────────────────────────────────────
+      const cacheKey = `${translation}:${message.toLowerCase().trim()}`;
+      if (memCache.has(cacheKey)) {
+        return res.status(200).json({ reply: memCache.get(cacheKey), cached: true });
       }
 
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
@@ -101,6 +119,15 @@ export default async function handler(req, res) {
       }
 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      // Store in memory cache
+      if (text) {
+        if (memCache.size >= MEM_CACHE_MAX) {
+          memCache.delete(memCache.keys().next().value); // evict oldest
+        }
+        memCache.set(cacheKey, text);
+      }
+
         return res.status(200).json({ reply: text || null });
   } catch (error) {
         console.error('Server error:', error);

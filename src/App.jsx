@@ -82,6 +82,7 @@ export default function App() {
   const [activeTopicId, setActiveTopicId] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const [activeTab, setActiveTab] = useState('study');
   const [vaultLoaded, setVaultLoaded] = useState(false);
   const [showTopicMenu, setShowTopicMenu] = useState(false);
@@ -215,6 +216,8 @@ export default function App() {
       }]);
     }
     setLoading(false);
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 3000);
   }, [input, messages, activeTopicId]);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -280,7 +283,9 @@ export default function App() {
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               disabled={loading}
             />
-            <button className="send-btn" onClick={() => sendMessage()} disabled={loading}>SEND</button>
+            <button className="send-btn" onClick={() => sendMessage()} disabled={loading || cooldown}>
+              {cooldown ? '⏳' : 'SEND'}
+            </button>
           </div>
           <p className="disclaimer">Don&#8217;t just take my word for it. Always verify by reading the full chapter yourself.</p>
         </div>
