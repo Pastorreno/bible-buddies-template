@@ -18,8 +18,9 @@ async function askCatechism(question, catechism, translation) {
     `Question: "${question}"\n` +
     `Translation: ${translation}\n` +
     `${catRef}\n\n` +
+    `Write in plain, everyday English. No theological jargon without immediate explanation. The answer should be something a 12-year-old can follow but a seminary student finds nothing missing. The depth is in the content, not the vocabulary.\n\n` +
     `Reply with ONLY this JSON (no markdown):\n` +
-    `{"question":"restate the question clearly","answer":"the catechism-style answer in 1-3 sentences","proof_texts":[{"reference":"Book Chapter:Verse","text":"full verse text","explanation":"one sentence on why this verse proves the answer"}],"historical_note":"1-2 sentences on the historical context of this doctrine — when was it defined, why, against what error","deeper":"2-3 sentences going deeper for the scholar","disclaimer":"Always verify through personal study of Scripture and the primary catechism sources."}`;
+    `{"question":"restate the question in plain everyday language","answer":"the answer in 1-3 clear sentences anyone can understand","proof_texts":[{"reference":"Book Chapter:Verse","text":"full verse text","explanation":"one plain sentence on why this verse proves the answer"}],"historical_note":"1-2 sentences on when and why this doctrine was defined — in plain language","deeper":"2-3 sentences going deeper for the scholar","disclaimer":"Always verify through personal study of Scripture and the primary catechism sources."}`;
 
   const raw = await callGemini(prompt);
   return JSON.parse(raw.replace(/```json|```/g, '').trim());

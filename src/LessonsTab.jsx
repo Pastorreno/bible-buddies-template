@@ -34,7 +34,10 @@ Name the doctrine this passage addresses. Explain it clearly for a new believer,
 Walk through the key verses with brief commentary on each.
 
 ## Discussion Questions
-Provide 6 discussion questions — 2 observation (what does it say?), 2 interpretation (what does it mean?), 2 application (how do I live it?).
+Provide 6 discussion questions. Write them in plain, everyday language — the way a real person would ask them in conversation, not the way a textbook would phrase them. No theological jargon in the questions themselves. The depth comes from the answers, not the wording.
+- 2 observation questions: "What did you notice about...?" "What stands out to you in this passage?"
+- 2 interpretation questions: "Why do you think...?" "What does it mean when it says...?"
+- 2 application questions: "How does this change the way you...?" "What would it look like in your life if...?"
 
 ## Application Challenge
 One specific, concrete challenge for group members to apply this week.

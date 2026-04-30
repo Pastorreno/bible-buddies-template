@@ -39,7 +39,10 @@ Name the doctrine, define it simply, then go deep.
 Walk through key verses with commentary.
 
 ## Discussion Questions
-6 questions — 2 observation, 2 interpretation, 2 application.
+6 questions in plain, conversational language — the way a real person would ask them, not a textbook. No jargon in the questions. The depth comes from the answers.
+- 2 observation: "What did you notice...?" "What stands out to you...?"
+- 2 interpretation: "Why do you think...?" "What does it mean when it says...?"
+- 2 application: "How does this change the way you...?" "What would it look like in your life if...?"
 
 ## Application Challenge
 One concrete challenge for this week.

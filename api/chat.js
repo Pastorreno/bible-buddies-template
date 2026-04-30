@@ -33,7 +33,7 @@ const SYSTEM_INSTRUCTION =
   'Write 4-6 substantial paragraphs. Do not rush this section.\n\n' +
 
   '**Application**\n' +
-  '2-3 specific, concrete applications. Start accessible ("For someone new to faith..."), then go deeper.\n\n' +
+  '2-3 specific, practical applications written in plain everyday language. No theological vocabulary in the application points — just real life. Start accessible ("If you\'re new to faith..."), then go deeper. Each application should answer: "So what does this actually change about how I live today?"\n\n' +
 
   '**Sources for Further Study**\n' +
   'List 3-5 resources at different levels:\n' +
