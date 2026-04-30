@@ -46,7 +46,12 @@ const BOOK_ID = {
 };
 
 const AO = 'https://bible.helloao.org/api';
-const SHEPHERD = 'https://bible.simplecohortllc.com/api/v1';
+
+async function fetchShepherdChapter(book, chapter) {
+  // Shepherd (simplecohortllc) is unreliable — use AO Lab for chapter data
+  // Returns null so chapter summary/groupings are skipped gracefully
+  return null;
+}
 
 async function fetchVotd(translation) {
   const r = await fetch('/api/verse', {
@@ -55,13 +60,6 @@ async function fetchVotd(translation) {
     body: JSON.stringify({ translation, random: true }),
   });
   return r.json();
-}
-
-async function fetchShepherdChapter(book, chapter) {
-  try {
-    const r = await fetch(`${SHEPHERD}/chapters/KJV/${encodeURIComponent(book)}/${chapter}`);
-    return r.ok ? r.json() : null;
-  } catch { return null; }
 }
 
 async function fetchAOChapter(book, chapter, translation = 'BSB') {

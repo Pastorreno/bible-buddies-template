@@ -16,13 +16,7 @@ async function generatePlan(topic, days, translation) {
     `Reply with ONLY this JSON (no markdown):\n` +
     `{"title":"Plan Title","days":[{"day":1,"passage":"Book Chapter:Verse-Verse","theme":"one-line theme","reflection":"one focused question to meditate on","prayer":"one-sentence prayer prompt"}]}`;
 
-  const r = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-  });
-  const data = await r.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const raw = await callGemini(prompt);
   return JSON.parse(raw.replace(/```json|```/g, '').trim());
 }
 

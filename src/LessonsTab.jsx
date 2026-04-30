@@ -70,7 +70,7 @@ async function generateQuiz(topics, translation) {
 function renderLesson(text) {
   return text
     .replace(/^# (.+)$/gm, '<h1 class="lesson-h1">$1</h1>')
-    .replace(/^## (.+)$/gm, '<h2 class="lesson-h2">$2</h2>'.replace('$2', '$1'))
+    .replace(/^## (.+)$/gm, '<h2 class="lesson-h2">$1</h2>')
     .replace(/^### (.+)$/gm, '<h3 class="lesson-h3">$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')

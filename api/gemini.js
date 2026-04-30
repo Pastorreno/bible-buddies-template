@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       }
     );
     const data = await r.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = raw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
     return res.status(200).json({ text });
   } catch (err) {
     return res.status(500).json({ error: err.message });

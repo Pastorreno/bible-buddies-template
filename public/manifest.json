@@ -1,0 +1,19 @@
+{
+  "name": "Bible Buddy",
+  "short_name": "Bible Buddy",
+  "description": "Your ultimate Bible companion — study, sermon prep, discipleship tools.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1923",
+  "theme_color": "#0F1923",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "lifestyle", "religion"]
+}

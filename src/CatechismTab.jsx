@@ -21,13 +21,7 @@ async function askCatechism(question, catechism, translation) {
     `Reply with ONLY this JSON (no markdown):\n` +
     `{"question":"restate the question clearly","answer":"the catechism-style answer in 1-3 sentences","proof_texts":[{"reference":"Book Chapter:Verse","text":"full verse text","explanation":"one sentence on why this verse proves the answer"}],"historical_note":"1-2 sentences on the historical context of this doctrine — when was it defined, why, against what error","deeper":"2-3 sentences going deeper for the scholar","disclaimer":"Always verify through personal study of Scripture and the primary catechism sources."}`;
 
-  const r = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-  });
-  const data = await r.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const raw = await callGemini(prompt);
   return JSON.parse(raw.replace(/```json|```/g, '').trim());
 }
 
