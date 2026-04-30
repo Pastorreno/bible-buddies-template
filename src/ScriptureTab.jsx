@@ -119,8 +119,6 @@ async function searchVerses(query, translation) {
     return JSON.parse(d.text);
   } catch { return null; }
 }
-  } catch { return null; }
-}
 
 export default function ScriptureTab({ translation, onAskBuddy }) {
   const [votd, setVotd] = useState(null);
