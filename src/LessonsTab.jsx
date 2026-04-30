@@ -1,21 +1,9 @@
+import { callGemini } from './gemini';
 import React, { useState } from 'react';
 import SeriesTab from './SeriesTab';
 import ReadingPlanTab from './ReadingPlanTab';
 import CatechismTab from './CatechismTab';
 import PrayerJournal from './PrayerJournal';
-
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-
-async function callGemini(prompt) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const r = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-  });
-  const data = await r.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
 
 async function generateLesson(topic, passage, translation, groupSize) {
   const prompt = `You are a seminary-trained pastor creating a small group Bible study guide in the tradition of top Bible colleges (Dallas Theological Seminary, Moody, Gordon-Conwell).

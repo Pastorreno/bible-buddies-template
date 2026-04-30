@@ -1,3 +1,4 @@
+import { callGemini } from './gemini';
 import React, { useState, useEffect } from 'react';
 
 const JOURNAL_KEY = 'bible_buddy_prayers_v1';
@@ -8,10 +9,7 @@ function savePrayers(p) { localStorage.setItem(JOURNAL_KEY, JSON.stringify(p)); 
 
 const CATEGORIES = ['Praise', 'Confession', 'Thanksgiving', 'Supplication', 'Intercession'];
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-
 async function getPrayerInsight(prayers, translation) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const summary = prayers.slice(0, 20).map(p =>
     `[${p.category}] ${p.passage ? p.passage + ': ' : ''}${p.request}`
   ).join('\n');

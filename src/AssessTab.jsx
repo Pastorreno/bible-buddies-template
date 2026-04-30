@@ -1,3 +1,4 @@
+import { callGemini } from './gemini';
 import React, { useState } from 'react';
 
 async function generateQuiz(topics, translation) {
@@ -9,25 +10,13 @@ async function generateQuiz(topics, translation) {
     })
     .join('\n');
 
-  const prompt = topicSummary
+  const prompt = (topicSummary
     ? `Based on these Bible study topics a user has explored:\n${topicSummary}\n\nGenerate a quiz of 5 multiple-choice questions to test their knowledge. Use the ${translation} Bible translation for any Scripture references.`
-    : `Generate a quiz of 5 multiple-choice questions covering foundational Bible knowledge. Use the ${translation} Bible translation for any Scripture references.`;
+    : `Generate a quiz of 5 multiple-choice questions covering foundational Bible knowledge. Use the ${translation} Bible translation for any Scripture references.`)
+    + `\n\nReply with ONLY this JSON (no markdown):\n{"questions":[{"q":"question text","options":["A","B","C","D"],"answer":"A","explanation":"brief explanation with Scripture reference"}]}`;
 
-  const fullPrompt = prompt + `\n\nReply with ONLY this JSON (no markdown):\n{"questions":[{"q":"question text","options":["A","B","C","D"],"answer":"A","explanation":"brief explanation with Scripture reference"}]}`;
-
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: fullPrompt }] }] }),
-    }
-  );
-  const data = await r.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const clean = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  const raw = await callGemini(prompt);
+  return JSON.parse(raw.replace(/```json|```/g, '').trim());
 }
 
 export default function AssessTab({ topics, translation }) {

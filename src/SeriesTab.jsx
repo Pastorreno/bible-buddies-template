@@ -1,3 +1,4 @@
+import { callGemini } from './gemini';
 import React, { useState, useEffect } from 'react';
 
 const SERIES_KEY = 'bible_buddy_series_v1';
@@ -9,10 +10,7 @@ function loadSeries() {
 }
 function saveSeries(data) { localStorage.setItem(SERIES_KEY, JSON.stringify(data)); }
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-
 async function generateSession(seriesTitle, sessionTopic, passage, translation, groupSize, sessionNum) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const prompt = `You are a seminary-trained pastor creating Session ${sessionNum} of a multi-week Bible study series titled "${seriesTitle}".
 
 Create a complete small group study guide for:

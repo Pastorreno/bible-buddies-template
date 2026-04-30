@@ -1,21 +1,13 @@
+import { callGemini } from './gemini';
 import React, { useState } from 'react';
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-
 async function studyWord(word, reference, translation) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const prompt =
     `You are a biblical language scholar. A student tapped the word "${word}" in ${reference} (${translation}).\n\n` +
     `Provide a concise word study. Reply with ONLY this JSON (no markdown):\n` +
     `{"word":"${word}","original":"the Greek or Hebrew word (transliterated)","language":"Greek or Hebrew","strongs":"Strong's number e.g. G26","literal":"literal meaning","definition":"clear 1-2 sentence definition","usage":"how this word is used elsewhere in Scripture — 2-3 key examples with references","significance":"1-2 sentences on why this word matters in this specific verse","disclaimer":"Always verify with a Strong's concordance or lexicon (BDAG for Greek, BDB for Hebrew)."}`;
 
-  const r = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-  });
-  const data = await r.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const raw = await callGemini(prompt);
   return JSON.parse(raw.replace(/```json|```/g, '').trim());
 }
 

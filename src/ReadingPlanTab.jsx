@@ -1,7 +1,7 @@
+import { callGemini } from './gemini';
 import React, { useState, useEffect } from 'react';
 
 const PLAN_KEY = 'bible_buddy_reading_plan_v1';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 function loadPlan() {
   try { return JSON.parse(localStorage.getItem(PLAN_KEY)); } catch { return null; }
@@ -9,7 +9,6 @@ function loadPlan() {
 function savePlan(p) { localStorage.setItem(PLAN_KEY, JSON.stringify(p)); }
 
 async function generatePlan(topic, days, translation) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const prompt =
     `Create a ${days}-day Bible reading plan on the topic: "${topic}".\n` +
     `Use the ${translation} translation.\n` +

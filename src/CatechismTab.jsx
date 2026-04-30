@@ -1,6 +1,5 @@
+import { callGemini } from './gemini';
 import React, { useState } from 'react';
-
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 const CATECHISMS = [
   { id: 'westminster', label: 'Westminster Shorter Catechism', tradition: 'Reformed/Presbyterian' },
@@ -10,7 +9,6 @@ const CATECHISMS = [
 ];
 
 async function askCatechism(question, catechism, translation) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const catRef = catechism !== 'custom'
     ? `Reference the ${CATECHISMS.find(c => c.id === catechism)?.label} where relevant.`
     : '';

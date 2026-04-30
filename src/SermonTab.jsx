@@ -1,3 +1,4 @@
+import { callGemini } from './gemini';
 import React, { useState, useEffect, useCallback } from 'react';
 
 const CHANNEL = 'bible_buddy_present';
@@ -14,7 +15,6 @@ async function fetchVerseText(reference, translation) {
 }
 
 async function suggestVerses(topic, translation, existing) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const used = existing.map(c => c.reference).join(', ');
   const prompt =
     `A pastor is preaching on "${topic}". They already have: ${used || 'no verses yet'}.\n` +
@@ -22,16 +22,7 @@ async function suggestVerses(topic, translation, existing) {
     `Use the ${translation} translation. Reply ONLY with this JSON (no markdown):\n` +
     `{"suggestions":[{"reference":"Book Chapter:Verse","text":"full verse text","reason":"one sentence why this fits"}]}`;
 
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-    }
-  );
-  const data = await r.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const raw = await callGemini(prompt);
   return JSON.parse(raw.replace(/```json|```/g, '').trim());
 }
 
