@@ -68,14 +68,7 @@ export default function DisplayView({ sessionId }) {
         <SlideDisplay slide={slide} state={state} />
       )}
 
-      {/* Session code watermark */}
-      {connected && (
-        <p style={{
-          position: 'absolute', bottom: 24, right: 32,
-          color: '#1a1a1a', fontSize: '1rem',
-          fontFamily: 'monospace', letterSpacing: '0.1em',
-        }}>{sessionId}</p>
-      )}
+      {/* No session ID on display — keep it off the projected screen */}
     </div>
   );
 }

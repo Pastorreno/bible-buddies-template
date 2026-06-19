@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { callGemini } from './gemini';
-import { supabase, makeSessionId } from './supabase';
+import { supabase, makeSessionId, ensureAnonAuth } from './supabase';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
@@ -47,11 +47,32 @@ async function suggestVerses(topic, translation, existing) {
 }
 
 // ── Session sync ──────────────────────────────────────────────────────────────
+const MAX_SLIDES = 200;
+const MAX_SLIDE_TEXT = 2000;
+
+function validateSlides(slides) {
+  if (!Array.isArray(slides) || slides.length > MAX_SLIDES) return false;
+  return slides.every(s =>
+    s && typeof s === 'object' &&
+    ['verse', 'note', 'title'].includes(s.type) &&
+    Object.values(s).every(v => typeof v !== 'string' || v.length <= MAX_SLIDE_TEXT)
+  );
+}
+
 async function pushSession(sessionId, title, slides, currentSlide, isBlank) {
   if (!supabase || !sessionId) return;
+  if (!validateSlides(slides)) return;
+  await ensureAnonAuth();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
   await supabase.from('bb_sessions').upsert({
-    id: sessionId, title, slides, current_slide: currentSlide,
-    is_blank: isBlank, updated_at: new Date().toISOString(),
+    id: sessionId,
+    title: (title ?? '').slice(0, 200),
+    slides,
+    current_slide: Math.max(0, Math.min(currentSlide, slides.length - 1)),
+    is_blank: Boolean(isBlank),
+    updated_at: new Date().toISOString(),
+    presenter_id: user.id,
   });
 }
 
