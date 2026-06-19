@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ScriptureTab from './ScriptureTab';
 import LessonsTab from './LessonsTab';
-import SermonTab from './SermonTab';
+import PresentTab from './PresentTab';
+import StudyNotebook from './StudyNotebook';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -48,7 +49,25 @@ function welcomeMsg() {
 }
 
 function newTopic(title = 'New Topic') {
-  return { id: makeId(), title, createdAt: Date.now(), messages: [welcomeMsg()] };
+  return {
+    id: makeId(),
+    title,
+    createdAt: Date.now(),
+    messages: [welcomeMsg()],
+    savedVerses: [],
+    notes: [],
+    memory: '',
+  };
+}
+
+function normalizeTopic(topic) {
+  return {
+    ...topic,
+    messages: topic.messages || [welcomeMsg()],
+    savedVerses: topic.savedVerses || [],
+    notes: topic.notes || [],
+    memory: topic.memory || '',
+  };
 }
 
 // ── LocalStorage helpers ──────────────────────────────────────────────────────
@@ -56,13 +75,16 @@ function loadVault() {
   try {
     // Try v2 first
     const v2 = localStorage.getItem(VAULT_KEY_V2);
-    if (v2) return JSON.parse(v2);
+    if (v2) {
+      const parsed = JSON.parse(v2);
+      return { ...parsed, topics: (parsed.topics || []).map(normalizeTopic) };
+    }
 
     // Migrate v1 → v2
     const v1 = localStorage.getItem(VAULT_KEY_V1);
     if (v1) {
       const { messages: savedMsgs } = JSON.parse(v1);
-      const general = { id: makeId(), title: 'General', createdAt: Date.now(), messages: savedMsgs || [welcomeMsg()] };
+      const general = normalizeTopic({ id: makeId(), title: 'General', createdAt: Date.now(), messages: savedMsgs || [welcomeMsg()] });
       return { topics: [general], activeTopicId: general.id };
     }
   } catch (e) {
@@ -74,6 +96,10 @@ function loadVault() {
 
 function saveVault(topics, activeTopicId) {
   localStorage.setItem(VAULT_KEY_V2, JSON.stringify({ topics, activeTopicId }));
+}
+
+function mostRecentUserQuestion(topic) {
+  return [...(topic?.messages || [])].reverse().find(m => m.role === 'user')?.text || '';
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -88,6 +114,7 @@ export default function App() {
   const [showTopicMenu, setShowTopicMenu] = useState(false);
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [passageStarter, setPassageStarter] = useState('');
   const [translation, setTranslation] = useState(() =>
     localStorage.getItem(TRANSLATION_KEY) || 'ESV'
   );
@@ -181,6 +208,82 @@ export default function App() {
     setTopics(prev => prev.map(t => t.id === id ? { ...t, messages: updater(t.messages) } : t));
   };
 
+  const addSavedVerse = (verse) => {
+    if (!activeTopicId || !verse?.reference || !verse?.text) return;
+    setTopics(prev => prev.map(t => {
+      if (t.id !== activeTopicId) return t;
+      const exists = (t.savedVerses || []).some(v =>
+        v.reference === verse.reference && v.translation === verse.translation
+      );
+      if (exists) return t;
+      return {
+        ...t,
+        savedVerses: [
+          {
+            id: makeId(),
+            reference: verse.reference,
+            text: verse.text,
+            translation: verse.translation || translation,
+            createdAt: Date.now(),
+          },
+          ...(t.savedVerses || []),
+        ],
+      };
+    }));
+  };
+
+  const removeSavedVerse = (id) => {
+    setTopics(prev => prev.map(t => t.id === activeTopicId
+      ? { ...t, savedVerses: (t.savedVerses || []).filter(v => v.id !== id) }
+      : t
+    ));
+  };
+
+  const addNote = (note) => {
+    setTopics(prev => prev.map(t => t.id === activeTopicId
+      ? { ...t, notes: [note, ...(t.notes || [])] }
+      : t
+    ));
+  };
+
+  const updateNote = (id, patch) => {
+    setTopics(prev => prev.map(t => t.id === activeTopicId
+      ? { ...t, notes: (t.notes || []).map(n => n.id === id ? { ...n, ...patch } : n) }
+      : t
+    ));
+  };
+
+  const deleteNote = (id) => {
+    setTopics(prev => prev.map(t => t.id === activeTopicId
+      ? { ...t, notes: (t.notes || []).filter(n => n.id !== id) }
+      : t
+    ));
+  };
+
+  const setTopicMemory = (memory) => {
+    setTopics(prev => prev.map(t => t.id === activeTopicId ? { ...t, memory } : t));
+  };
+
+  const saveAnswerAsNote = (msg) => {
+    addNote({
+      id: makeId(),
+      title: msg.label === 'WELCOME' ? 'Bible Buddy Note' : msg.label || 'Bible Buddy Answer',
+      body: msg.text,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    setActiveTab('notebook');
+  };
+
+  const startPassageStudy = () => {
+    const passage = passageStarter.trim();
+    if (!passage) return;
+    setPassageStarter('');
+    sendMessage(
+      `Create a passage-centered study workspace for ${passage} in ${translation}. Include observation, historical context, literary context, key Greek or Hebrew words, cross-references, doctrinal themes, application questions, prayer prompts, and what to study next.`
+    );
+  };
+
   // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text) => {
     const userText = text || input.trim();
@@ -200,7 +303,12 @@ export default function App() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText, history: historyForApi, translation }),
+        body: JSON.stringify({
+          message: userText,
+          history: historyForApi,
+          translation,
+          topicMemory: activeTopic?.memory || '',
+        }),
       });
       const data = await res.json();
       updateMessages(activeTopicId, msgs => [...msgs, {
@@ -218,12 +326,30 @@ export default function App() {
     setLoading(false);
     setCooldown(true);
     setTimeout(() => setCooldown(false), 3000);
-  }, [input, messages, activeTopicId]);
+  }, [input, messages, activeTopicId, activeTopic?.memory, translation]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   const renderTabContent = () => {
     if (activeTab === 'scripture') {
-      return <ScriptureTab translation={translation} onAskBuddy={(text) => { setActiveTab('study'); sendMessage(text); }} />;
+      return <ScriptureTab
+        translation={translation}
+        onSaveVerse={addSavedVerse}
+        onAskBuddy={(text) => { setActiveTab('study'); sendMessage(text); }}
+      />;
+    }
+
+    if (activeTab === 'notebook') {
+      return <StudyNotebook
+        topic={activeTopic}
+        translation={translation}
+        onBackToStudy={() => setActiveTab('study')}
+        onAskBuddy={(text) => { setActiveTab('study'); sendMessage(text); }}
+        onAddNote={addNote}
+        onUpdateNote={updateNote}
+        onDeleteNote={deleteNote}
+        onRemoveVerse={removeSavedVerse}
+        onSetMemory={setTopicMemory}
+      />;
     }
 
     if (activeTab === 'lessons') {
@@ -231,12 +357,55 @@ export default function App() {
     }
 
     if (activeTab === 'present') {
-      return <SermonTab translation={translation} />;
+      return <PresentTab translation={translation} />;
     }
 
     return (
       <React.Fragment>
         <main className="chat-area">
+          <section className="study-dashboard">
+            <div className="study-dashboard-head">
+              <div>
+                <span className="section-label" style={{ marginBottom: 4 }}>CURRENT STUDY</span>
+                <h2 className="study-dashboard-title">{activeTopic?.title || 'General'}</h2>
+              </div>
+              <button className="ask-buddy-inline" onClick={() => setActiveTab('notebook')}>
+                Open Notes
+              </button>
+            </div>
+            <div className="study-metrics">
+              <div><strong>{messages.filter(m => m.role === 'user').length}</strong><span>Questions</span></div>
+              <div><strong>{activeTopic?.savedVerses?.length || 0}</strong><span>Verses</span></div>
+              <div><strong>{activeTopic?.notes?.length || 0}</strong><span>Notes</span></div>
+            </div>
+            {activeTopic?.memory ? (
+              <p className="study-memory-preview">{activeTopic.memory}</p>
+            ) : (
+              <p className="study-memory-preview muted">Add a topic memory in Notes so Bible Buddy keeps continuity for this study.</p>
+            )}
+            <div className="passage-starter">
+              <input
+                className="scripture-input"
+                placeholder="Start passage study: John 3:16, Romans 8, Psalm 23..."
+                value={passageStarter}
+                onChange={e => setPassageStarter(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && startPassageStudy()}
+              />
+              <button className="scripture-btn" onClick={startPassageStudy} disabled={!passageStarter.trim()}>
+                Study
+              </button>
+            </div>
+            {mostRecentUserQuestion(activeTopic) && (
+              <button
+                className="continue-study-btn"
+                onClick={() => sendMessage(`Continue and deepen this study from my last question: ${mostRecentUserQuestion(activeTopic)}`)}
+                disabled={loading || cooldown}
+              >
+                Continue last question
+              </button>
+            )}
+          </section>
+
           {messages.map((msg, i) => (
             msg.role === 'user' ? (
               <div key={i} className="inquiry-block">
@@ -249,6 +418,11 @@ export default function App() {
                 <div className="insight-content">
                   {msg.label && <span className="block-label insight-label">{msg.label}</span>}
                   <div className="insight-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
+                  {msg.label !== 'WELCOME' && msg.label !== 'ERROR' && (
+                    <button className="save-answer-btn" onClick={() => saveAnswerAsNote(msg)}>
+                      Save as note
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -301,8 +475,8 @@ export default function App() {
           <span className="header-title">Bible Buddy</span>
         </div>
 
-        {/* Topic dropdown (study tab only) */}
-        {activeTab === 'study' && (
+        {/* Topic dropdown */}
+        {(activeTab === 'study' || activeTab === 'notebook') && (
           <div style={{ position: 'relative' }}>
             <button
               className="topic-selector-btn"
@@ -351,7 +525,7 @@ export default function App() {
           </div>
         )}
 
-        {activeTab !== 'study' && (
+        {activeTab !== 'study' && activeTab !== 'notebook' && (
           <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', background: 'var(--navy-3)', borderRadius: 6, padding: '4px 8px', letterSpacing: '0.06em' }}>
             {translation}
           </span>
@@ -369,6 +543,10 @@ export default function App() {
         <button className={`nav-item ${activeTab === 'study' ? 'active' : ''}`} onClick={() => setActiveTab('study')}>
           <span className="nav-icon">✨</span>
           <span>STUDY</span>
+        </button>
+        <button className={`nav-item ${activeTab === 'notebook' ? 'active' : ''}`} onClick={() => setActiveTab('notebook')}>
+          <span className="nav-icon">▤</span>
+          <span>NOTES</span>
         </button>
         <button className={`nav-item ${activeTab === 'lessons' ? 'active' : ''}`} onClick={() => setActiveTab('lessons')}>
           <span className="nav-icon">✎</span>
